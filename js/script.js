@@ -265,6 +265,7 @@ const displaySlider = async () => {
   });
 };
 
+//init function for swiper
 const initSwiper = () => {
   const swiper = new Swiper('.swiper', {
     slidesPerView: 1,
