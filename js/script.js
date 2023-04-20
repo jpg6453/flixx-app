@@ -5,6 +5,7 @@ const global = {
     type: '',
     page: 1,
     totalPages: 1,
+    totalResults: 0,
   },
   api: {
     apiKey: config.API_KEY,
@@ -264,9 +265,12 @@ const search = async () => {
   global.search.term = urlParams.get('search-term');
 
   if (global.search.term !== '' && global.search.term !== null) {
-    const { results, total_pages, page } = await searchAPIData();
+    const { results, total_pages, page, total_results } = await searchAPIData();
 
-    console.log(results);
+    global.search.page = page;
+    global.search.totalPages = total_pages;
+    global.search.totalResults = total_results;
+
     if (results.length === 0) {
       showAlert('No results found');
       return;
@@ -320,6 +324,8 @@ const displaySearchResults = (results) => {
             </p>
           </div>
         `;
+    document.querySelector('#search-results-heading').innerHTML = `
+        <h2>${results.length} of ${global.search.totalResults} results for ${global.search.term}</h2>`;
     document.querySelector('#search-results').appendChild(div);
   });
 };
