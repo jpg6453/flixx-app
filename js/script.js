@@ -1,5 +1,15 @@
 const global = {
   currentPage: window.location.pathname,
+  search: {
+    term: '',
+    type: '',
+    page: 1,
+    totalPages: 1,
+  },
+  api: {
+    apiKey: config.API_KEY,
+    apiUrl: 'https://api.themoviedb.org/3/',
+  },
 };
 
 // display popular movies
@@ -244,6 +254,76 @@ const displayBackgroundImage = (type, backgroundPath) => {
   }
 };
 
+// search movies & tv shows
+
+const search = async () => {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+
+  global.search.type = urlParams.get('type');
+  global.search.term = urlParams.get('search-term');
+
+  if (global.search.term !== '' && global.search.term !== null) {
+    const { results, total_pages, page } = await searchAPIData();
+
+    console.log(results);
+    if (results.length === 0) {
+      showAlert('No results found');
+      return;
+    }
+    displaySearchResults(results);
+    document.querySelector('#search-term').value = '';
+  } else {
+    showAlert('Please enter a search term');
+  }
+};
+
+// display search results
+
+const displaySearchResults = (results) => {
+  results.forEach((result) => {
+    const div = document.createElement('div');
+    div.classList.add('card');
+    div.innerHTML = `
+    
+          <a href="${global.search.type}-details.html?id=${result.id}">
+            ${
+              result.poster_path
+                ? `
+                <img
+              src="https://image.tmdb.org/t/p/w500${result.poster_path}"
+              class="card-img-top"
+              alt="${
+                global.search.type === 'movie' ? result.title : result.name
+              }"
+            />`
+                : `
+            <img
+              src="../images/no-image.jpg"
+              class="card-img-top"
+              alt="${
+                global.search.type === 'movie' ? result.title : result.name
+              }"
+            />`
+            }
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">${
+              global.search.type === 'movie' ? result.title : result.name
+            }</h5>
+            <p class="card-text">
+              <small class="text-muted">Aired: ${
+                global.search.type === 'movie'
+                  ? result.release_date
+                  : result.first_air_date
+              }</small>
+            </p>
+          </div>
+        `;
+    document.querySelector('#search-results').appendChild(div);
+  });
+};
+
 // Display movie slider
 
 const displaySlider = async () => {
@@ -293,11 +373,24 @@ const initSwiper = () => {
 // fetch data from TMBD API
 
 const fetchAPIData = async (endpoint) => {
-  const API_KEY = config.API_KEY;
-  const API_URL = 'https://api.themoviedb.org/3/';
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
   showSpinner();
   const response = await fetch(
     `${API_URL}${endpoint}?api_key=${API_KEY}&language=en-US`
+  );
+  const data = await response.json();
+  hideSpinner();
+  return data;
+};
+
+//make request to search
+const searchAPIData = async () => {
+  const API_KEY = global.api.apiKey;
+  const API_URL = global.api.apiUrl;
+  showSpinner();
+  const response = await fetch(
+    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
   );
   const data = await response.json();
   hideSpinner();
@@ -321,6 +414,17 @@ const highlightActiveLink = () => {
       link.classList.add('active');
     }
   });
+};
+
+// show alert
+
+const showAlert = (message, className = 'error') => {
+  const alertEl = document.createElement('div');
+  alertEl.classList.add('alert', className);
+  alertEl.appendChild(document.createTextNode(message));
+  document.querySelector('#alert').appendChild(alertEl);
+
+  setTimeout(() => alertEl.remove(), 3000);
 };
 
 // format budget values
@@ -348,7 +452,7 @@ const init = () => {
       displayShowDetails();
       break;
     case '/search.html':
-      console.log('Search');
+      search();
       break;
   }
   highlightActiveLink();

@@ -1,5 +1,6 @@
 {
   "editor.fontSize": 18,
   "editor.formatOnSave": true,
-  "workbench.colorTheme": "2077"
+  "workbench.colorTheme": "2077",
+  "workbench.preferredDarkColorTheme": "Default Dark+"
 }
