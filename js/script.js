@@ -285,6 +285,13 @@ const search = async () => {
 // display search results
 
 const displaySearchResults = (results) => {
+  // Clear previous results
+  document.querySelector('#search-results').innerHTML = '';
+  document.querySelector('#search-results-heading').innerHTML = '';
+  document.querySelector('#pagination').innerHTML = '';
+
+  //loop thru results and build cards
+
   results.forEach((result) => {
     const div = document.createElement('div');
     div.classList.add('card');
@@ -327,6 +334,43 @@ const displaySearchResults = (results) => {
     document.querySelector('#search-results-heading').innerHTML = `
         <h2>${results.length} of ${global.search.totalResults} results for ${global.search.term}</h2>`;
     document.querySelector('#search-results').appendChild(div);
+  });
+  displayPagination();
+};
+
+//create pagination for search
+
+const displayPagination = () => {
+  const div = document.createElement('div');
+  div.classList.add('pagination');
+  div.innerHTML = `
+          <button class="btn btn-primary" id="prev">Prev</button>
+          <button class="btn btn-primary" id="next">Next</button>
+          <div class="page-counter">Page ${global.search.page} of ${global.search.totalPages}</div>`;
+
+  document.querySelector('#pagination').appendChild(div);
+
+  //disable btns if on 1st/lastpage
+  if (global.search.page === 1) {
+    document.querySelector('#prev').disabled = true;
+  }
+
+  if (global.search.page === global.search.totalPages) {
+    document.querySelector('#next').disabled = true;
+  }
+
+  //load next page
+  document.querySelector('#next').addEventListener('click', async () => {
+    global.search.page++;
+    const { results, total_pages } = await searchAPIData();
+    displaySearchResults(results);
+  });
+
+  //load prev page
+  document.querySelector('#prev').addEventListener('click', async () => {
+    global.search.page--;
+    const { results, total_pages } = await searchAPIData();
+    displaySearchResults(results);
   });
 };
 
@@ -396,7 +440,7 @@ const searchAPIData = async () => {
   const API_URL = global.api.apiUrl;
   showSpinner();
   const response = await fetch(
-    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}`
+    `${API_URL}search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}&page=${global.search.page}`
   );
   const data = await response.json();
   hideSpinner();
